@@ -44,6 +44,7 @@ from Losses import loss_HardNet, loss_random_sampling, loss_L2Net, global_orthog
 from W1BS import w1bs_extract_descs_and_save
 from Utils import L2Norm, cv2_scale, np_reshape
 from Utils import str2bool
+import utils.w1bs as w1bs
 import torch.nn as nn
 import torch.nn.functional as F
 
