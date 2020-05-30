@@ -280,7 +280,7 @@ class TrainHardNet(object):
             parser.add_argument('--dataroot', type=str,
                                 default='data/sets/',
                                 help='path to dataset')
-            parser.add_argument('--enable-logging',type=str2bool, default=False,
+            parser.add_argument('--enable-logging',type=str2bool, default=True,
                                 help='output to tensorlogger')
             parser.add_argument('--log-dir', default='data/logs/',
                                 help='folder to output log')
@@ -371,7 +371,6 @@ class TrainHardNet(object):
 
         self.test_on_w1bs = False
         # check if path to w1bs dataset testing module exists
-        print(self.args.w1bsroot)
         if os.path.isdir(self.args.w1bsroot):
             sys.path.insert(0, self.args.w1bsroot)
             import utils.w1bs as w1bs
@@ -614,11 +613,11 @@ class TrainHardNet(object):
             self.train(train_loader, model, optimizer1, epoch, logger, self.triplet_flag)
             for test_loader in test_loaders:
                 self.test(test_loader['dataloader'], model, epoch, logger, test_loader['name'])
-            
-            if self.test_on_w1bs :
-                # print(weights_path)
+
+            if self.test_on_w1bs:
+                print("Saving test_on_w1bs results")
                 patch_images = w1bs.get_list_of_patch_images(
-                    DATASET_DIR=self.args.w1bsroot.replace('/code', '/data/W1BS'))
+                    DATASET_DIR=self.args.w1bsroot)
                 desc_name = 'curr_desc'# + str(random.randint(0,100))
                 
                 self.descs_dir = self.log_dir + '/temp_descs/' #self.args.w1bsroot.replace('/code', "/data/out_descriptors")
@@ -634,6 +633,9 @@ class TrainHardNet(object):
                 w1bs.match_descriptors_and_save_results(DESC_DIR=self.descs_dir, do_rewrite=True,
                                                         dist_dict={},
                                                         force_rewrite_list=force_rewrite_list)
+                print("descs_dir", self.descs_dir)
+                print("OUT_DIR", OUT_DIR)
+                print("Number of patch_images", len(patch_images))
                 if(self.args.enable_logging):
                     w1bs.draw_and_save_plots_with_loggers(DESC_DIR=self.descs_dir, OUT_DIR=OUT_DIR,
                                             methods=["SNN_ratio"],
