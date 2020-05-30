@@ -49,7 +49,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # ResNet improvements
-from ResNetMono import resnet18
+from ResNetMono import resnet18, resnet34
 
 class CorrelationPenaltyLoss(nn.Module):
     def __init__(self):
@@ -212,10 +212,15 @@ class HardNet(nn.Module):
 class ResHardNet(nn.Module):
     """ResHardNet model definition
     """
-    def __init__(self):
+    def __init__(self, pretrained=False, model="resnet18"):
         super(ResHardNet, self).__init__()
         # by default resnet outputs 1000 classes
-        self.features = resnet18(pretrained=False, progress=True, num_classes=128)
+        if model == "resnet34":
+            self.features = resnet34(pretrained=pretrained, progress=True, num_classes=128)
+        elif model == "resnet18":
+            self.features = resnet18(pretrained=pretrained, progress=True, num_classes=128)
+        else:
+            print(model, "is not supported")
         # self.features = nn.Sequential(
         #     nn.Conv2d(1, 32, kernel_size=3, padding=1, bias = False),
         #     nn.BatchNorm2d(32, affine=False),
@@ -353,13 +358,17 @@ class TrainHardNet(object):
                                 help='how many batches to wait before logging training status')
             parser.add_argument('--model-variant', default='hardnet', type=str,
                                 metavar='mv', help='The model to use (default: hardnet)')
+            parser.add_argument('--pre-trained', default=False, type=str2bool,
+                                metavar='pt', help='Use pretrained weights')
 
             self.args = parser.parse_args()
         else:
             self.args = args
         
         if self.args.model_variant == "reshardnet":
-            self.model = ResHardNet()
+            self.model = ResHardNet(self.args.pre_trained)
+        elif self.args.model_variant == "resnet34":
+            self.model = ResHardNet(self.args.pre_trained, "reshardnet34")
         else:
             self.model = HardNet()
 
@@ -525,24 +534,25 @@ class TrainHardNet(object):
         labels, distances = [], []
 
         pbar = tqdm(enumerate(test_loader))
-        for batch_idx, (data_a, data_p, label) in pbar:
+        with torch.no_grad():
+            for batch_idx, (data_a, data_p, label) in pbar:
 
-            if self.args.cuda:
-                data_a, data_p = data_a.cuda(), data_p.cuda()
+                if self.args.cuda:
+                    data_a, data_p = data_a.cuda(), data_p.cuda()
 
-            data_a, data_p, label = Variable(data_a, volatile=True), \
-                                    Variable(data_p, volatile=True), Variable(label)
-            out_a = model(data_a)
-            out_p = model(data_p)
-            dists = torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-            distances.append(dists.data.cpu().numpy().reshape(-1,1))
-            ll = label.data.cpu().numpy().reshape(-1, 1)
-            labels.append(ll)
+                data_a, data_p, label = Variable(data_a), \
+                                        Variable(data_p), Variable(label)
+                out_a = model(data_a)
+                out_p = model(data_p)
+                dists = torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+                distances.append(dists.data.cpu().numpy().reshape(-1,1))
+                ll = label.data.cpu().numpy().reshape(-1, 1)
+                labels.append(ll)
 
-            if batch_idx % self.args.log_interval == 0:
-                pbar.set_description(logger_test_name+' Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                    epoch, batch_idx * len(data_a), len(test_loader.dataset),
-                        100. * batch_idx / len(test_loader)))
+                if batch_idx % self.args.log_interval == 0:
+                    pbar.set_description(logger_test_name+' Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
+                        epoch, batch_idx * len(data_a), len(test_loader.dataset),
+                            100. * batch_idx / len(test_loader)))
 
         num_tests = test_loader.dataset.matches.size(0)
         labels = np.vstack(labels).reshape(num_tests)
