@@ -85,7 +85,7 @@ def loss_L2Net(anchor, positive, anchor_swap = False,  margin = 1.0, loss_type =
     return loss
 
 def loss_HardNet(anchor, positive, anchor_swap = False, anchor_ave = False,\
-        margin = 1.0, batch_reduce = 'min', loss_type = "triplet_margin"):
+        margin = 1.0, batch_reduce = 'min', loss_type = "triplet_margin", no_cuda=False):
     """HardNet margin loss - calculates loss based on distance matrix based on positive distance and closest negative distance.
     """
 
@@ -93,7 +93,10 @@ def loss_HardNet(anchor, positive, anchor_swap = False, anchor_ave = False,\
     assert anchor.dim() == 2, "Inputd must be a 2D matrix."
     eps = 1e-8
     dist_matrix = distance_matrix_vector(anchor, positive) +eps
-    eye = torch.autograd.Variable(torch.eye(dist_matrix.size(1))).cuda()
+    if no_cuda:
+        eye = torch.autograd.Variable(torch.eye(dist_matrix.size(1)))
+    else:
+        eye = torch.autograd.Variable(torch.eye(dist_matrix.size(1))).cuda()
 
     # steps to filter out same patches that occur in distance matrix as negatives
     pos1 = torch.diag(dist_matrix)

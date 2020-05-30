@@ -14,9 +14,11 @@ If you use this code, please cite
 """
 
 from __future__ import division, print_function
+
 # uncomment to support plotting in headless mode
-import matplotlib
-matplotlib.use('Agg')
+# this will not work with Jupyter
+# import matplotlib
+# matplotlib.use('Agg')
 
 import sys
 from copy import deepcopy
@@ -42,9 +44,11 @@ from Losses import loss_HardNet, loss_random_sampling, loss_L2Net, global_orthog
 from W1BS import w1bs_extract_descs_and_save
 from Utils import L2Norm, cv2_scale, np_reshape
 from Utils import str2bool
-import utils.w1bs as w1bs
 import torch.nn as nn
 import torch.nn.functional as F
+
+# ResNet improvements
+from ResNetMono import resnet18
 
 class CorrelationPenaltyLoss(nn.Module):
     def __init__(self):
@@ -204,6 +208,51 @@ class HardNet(nn.Module):
         x = x_features.view(x_features.size(0), -1)
         return L2Norm()(x)
 
+class ResHardNet(nn.Module):
+    """ResHardNet model definition
+    """
+    def __init__(self):
+        super(ResHardNet, self).__init__()
+        # by default resnet outputs 1000 classes
+        self.features = resnet18(pretrained=False, progress=True, num_classes=128)
+        # self.features = nn.Sequential(
+        #     nn.Conv2d(1, 32, kernel_size=3, padding=1, bias = False),
+        #     nn.BatchNorm2d(32, affine=False),
+        #     nn.ReLU(),
+        #     nn.Conv2d(32, 32, kernel_size=3, padding=1, bias = False),
+        #     nn.BatchNorm2d(32, affine=False),
+        #     nn.ReLU(),
+        #     nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1, bias = False),
+        #     nn.BatchNorm2d(64, affine=False),
+        #     nn.ReLU(),
+        #     nn.Conv2d(64, 64, kernel_size=3, padding=1, bias = False),
+        #     nn.BatchNorm2d(64, affine=False),
+        #     nn.ReLU(),
+        #     nn.Conv2d(64, 128, kernel_size=3, stride=2,padding=1, bias = False),
+        #     nn.BatchNorm2d(128, affine=False),
+        #     nn.ReLU(),
+        #     nn.Conv2d(128, 128, kernel_size=3, padding=1, bias = False),
+        #     nn.BatchNorm2d(128, affine=False),
+        #     nn.ReLU(),
+        #     nn.Dropout(0.3),
+        #     nn.Conv2d(128, 128, kernel_size=8, bias = False),
+        #     nn.BatchNorm2d(128, affine=False),
+        # )
+        # print("Initializing weights")
+        # self.features.apply(weights_init)
+        return
+    
+    def input_norm(self,x):
+        flat = x.view(x.size(0), -1)
+        mp = torch.mean(flat, dim=1)
+        sp = torch.std(flat, dim=1) + 1e-7
+        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
+    
+    def forward(self, input):
+        x_features = self.features(self.input_norm(input))
+        x = x_features.view(x_features.size(0), -1)
+        return L2Norm()(x)
+
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
         nn.init.orthogonal(m.weight.data, gain=0.6)
@@ -301,10 +350,17 @@ class TrainHardNet(object):
                                 help='random seed (default: 0)')
             parser.add_argument('--log-interval', type=int, default=10, metavar='LI',
                                 help='how many batches to wait before logging training status')
+            parser.add_argument('--model-variant', default='hardnet', type=str,
+                                metavar='mv', help='The model to use (default: hardnet)')
 
             self.args = parser.parse_args()
         else:
             self.args = args
+        
+        if self.args.model_variant == "reshardnet":
+            self.model = ResHardNet()
+        else:
+            self.model = HardNet()
 
         self.suffix = '{}_{}_{}'.format(self.args.experiment_name, self.args.training_set, self.args.batch_reduce)
 
@@ -317,6 +373,7 @@ class TrainHardNet(object):
         print(self.args.w1bsroot)
         if os.path.isdir(self.args.w1bsroot):
             sys.path.insert(0, self.args.w1bsroot)
+            import utils.w1bs as w1bs
             self.test_on_w1bs = True
 
         # set the device to use by setting CUDA_VISIBLE_DEVICES env variable in
@@ -408,8 +465,8 @@ class TrainHardNet(object):
             if self.args.cuda:
                 data_a, data_p  = data_a.cuda(), data_p.cuda()
                 data_a, data_p = Variable(data_a), Variable(data_p)
-                out_a = model(data_a)
-                out_p = model(data_p)
+            out_a = model(data_a)
+            out_p = model(data_p)
             if load_triplets:
                 data_n  = data_n.cuda()
                 data_n = Variable(data_n)
@@ -429,7 +486,8 @@ class TrainHardNet(object):
                                 anchor_swap=self.args.anchorswap,
                                 anchor_ave=self.args.anchorave,
                                 batch_reduce = self.args.batch_reduce,
-                                loss_type = self.args.loss)
+                                loss_type = self.args.loss,
+                                no_cuda = self.args.no_cuda)
 
             if self.args.decor:
                 loss += CorrelationPenaltyLoss()(out_a)
@@ -603,8 +661,7 @@ class TrainHardNet(object):
             if not os.path.isdir(self.descs_dir):
                 os.makedirs(self.descs_dir)
         logger, file_logger = None, None
-        print("Creating HardNet Model")
-        model = HardNet()
+        print("Creating Model")
         if(self.args.enable_logging):
             from Loggers import Logger, FileLogger
             logger = Logger(self.log_dir)
@@ -613,7 +670,7 @@ class TrainHardNet(object):
         train_loader, test_loaders = self.create_loaders(load_random_triplets = self.triplet_flag)
         
         print("Staring execution")
-        self.execute(train_loader, test_loaders, model, logger, file_logger)
+        self.execute(train_loader, test_loaders, self.model, logger, file_logger)
 
 if __name__ == '__main__':
     runner = TrainHardNet()
