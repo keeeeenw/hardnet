@@ -44,12 +44,13 @@ from Losses import loss_HardNet, loss_random_sampling, loss_L2Net, global_orthog
 from W1BS import w1bs_extract_descs_and_save
 from Utils import L2Norm, cv2_scale, np_reshape
 from Utils import str2bool
-import utils.w1bs as w1bs
 import torch.nn as nn
 import torch.nn.functional as F
 
 # ResNet improvements
 from ResNetMono import resnet18, resnet34
+# DenseNet improvements
+from DenseNetMono import densenet121
 
 class CorrelationPenaltyLoss(nn.Module):
     def __init__(self):
@@ -212,40 +213,97 @@ class HardNet(nn.Module):
 class ResHardNet(nn.Module):
     """ResHardNet model definition
     """
-    def __init__(self, pretrained=False, model="resnet18"):
+    def __init__(self, pretrained=False):
         super(ResHardNet, self).__init__()
         # by default resnet outputs 1000 classes
-        if model == "resnet34":
-            self.features = resnet34(pretrained=pretrained, progress=True, num_classes=128)
-        elif model == "resnet18":
-            self.features = resnet18(pretrained=pretrained, progress=True, num_classes=128)
-        else:
-            print(model, "is not supported")
-        # self.features = nn.Sequential(
-        #     nn.Conv2d(1, 32, kernel_size=3, padding=1, bias = False),
-        #     nn.BatchNorm2d(32, affine=False),
-        #     nn.ReLU(),
-        #     nn.Conv2d(32, 32, kernel_size=3, padding=1, bias = False),
-        #     nn.BatchNorm2d(32, affine=False),
-        #     nn.ReLU(),
-        #     nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1, bias = False),
-        #     nn.BatchNorm2d(64, affine=False),
-        #     nn.ReLU(),
-        #     nn.Conv2d(64, 64, kernel_size=3, padding=1, bias = False),
-        #     nn.BatchNorm2d(64, affine=False),
-        #     nn.ReLU(),
-        #     nn.Conv2d(64, 128, kernel_size=3, stride=2,padding=1, bias = False),
-        #     nn.BatchNorm2d(128, affine=False),
-        #     nn.ReLU(),
-        #     nn.Conv2d(128, 128, kernel_size=3, padding=1, bias = False),
-        #     nn.BatchNorm2d(128, affine=False),
-        #     nn.ReLU(),
-        #     nn.Dropout(0.3),
-        #     nn.Conv2d(128, 128, kernel_size=8, bias = False),
-        #     nn.BatchNorm2d(128, affine=False),
-        # )
-        # print("Initializing weights")
-        # self.features.apply(weights_init)
+        # do not use if / else here. otherwise you won't be able to save the model weights
+        self.features = resnet18(pretrained=pretrained, progress=True, num_classes=128)
+        return
+    
+    def input_norm(self,x):
+        flat = x.view(x.size(0), -1)
+        mp = torch.mean(flat, dim=1)
+        sp = torch.std(flat, dim=1) + 1e-7
+        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
+    
+    def forward(self, input):
+        x_features = self.features(self.input_norm(input))
+        x = x_features.view(x_features.size(0), -1)
+        return L2Norm()(x)
+
+# I am duplicating models to allow us to save properly
+class ResHardNet34(nn.Module):
+    """ResHardNet model definition
+    """
+    def __init__(self, pretrained=False):
+        super(ResHardNet34, self).__init__()
+        # by default resnet outputs 1000 classes
+        # do not use if / else here. otherwise you won't be able to save the model weights
+        self.features = resnet34(pretrained=pretrained, progress=True, num_classes=128)
+        return
+    
+    def input_norm(self,x):
+        flat = x.view(x.size(0), -1)
+        mp = torch.mean(flat, dim=1)
+        sp = torch.std(flat, dim=1) + 1e-7
+        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
+    
+    def forward(self, input):
+        x_features = self.features(self.input_norm(input))
+        x = x_features.view(x_features.size(0), -1)
+        return L2Norm()(x)
+
+# I am duplicating models to allow us to save properly
+class ResHardNet50(nn.Module):
+    """ResHardNet model definition
+    """
+    def __init__(self, pretrained=False):
+        super(ResHardNet50, self).__init__()
+        # by default resnet outputs 1000 classes
+        # do not use if / else here. otherwise you won't be able to save the model weights
+        self.features = resnet50(pretrained=pretrained, progress=True, num_classes=128)
+        return
+    
+    def input_norm(self,x):
+        flat = x.view(x.size(0), -1)
+        mp = torch.mean(flat, dim=1)
+        sp = torch.std(flat, dim=1) + 1e-7
+        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
+    
+    def forward(self, input):
+        x_features = self.features(self.input_norm(input))
+        x = x_features.view(x_features.size(0), -1)
+        return L2Norm()(x)
+
+# I am duplicating models to allow us to save properly
+class ResHardNet101(nn.Module):
+    """ResHardNet model definition
+    """
+    def __init__(self, pretrained=False):
+        super(ResHardNet101, self).__init__()
+        # by default resnet outputs 1000 classes
+        # do not use if / else here. otherwise you won't be able to save the model weights
+        self.features = resnet101(pretrained=pretrained, progress=True, num_classes=128)
+        return
+    
+    def input_norm(self,x):
+        flat = x.view(x.size(0), -1)
+        mp = torch.mean(flat, dim=1)
+        sp = torch.std(flat, dim=1) + 1e-7
+        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
+    
+    def forward(self, input):
+        x_features = self.features(self.input_norm(input))
+        x = x_features.view(x_features.size(0), -1)
+        return L2Norm()(x)
+
+class DenseHardNet(nn.Module):
+    """DenseHardNet model definition
+    """
+    def __init__(self, pretrained=False, model="densenet121"):
+        super(DenseHardNet, self).__init__()
+        # by default desnet outputs 1000 classes
+        self.features = densenet121(pretrained=pretrained, progress=True, num_classes=128)
         return
     
     def input_norm(self,x):
@@ -368,7 +426,13 @@ class TrainHardNet(object):
         if self.args.model_variant == "reshardnet":
             self.model = ResHardNet(self.args.pre_trained)
         elif self.args.model_variant == "resnet34":
-            self.model = ResHardNet(self.args.pre_trained, "reshardnet34")
+            self.model = ResHardNet34(self.args.pre_trained)
+        elif self.args.model_variant == "resnet50":
+            self.model = ResHardNet50(self.args.pre_trained)
+        elif self.args.model_variant == "resnet101":
+            self.model = ResHardNet101(self.args.pre_trained)
+        elif self.args.model_variant == "densenet121":
+            self.model = DenseHardNet(self.args.pre_trained)
         else:
             self.model = HardNet()
 
@@ -380,9 +444,9 @@ class TrainHardNet(object):
 
         self.test_on_w1bs = False
         # check if path to w1bs dataset testing module exists
+        import utils.w1bs as w1bs
         if os.path.isdir(self.args.w1bsroot):
             sys.path.insert(0, self.args.w1bsroot)
-            import utils.w1bs as w1bs
             self.test_on_w1bs = True
 
         # set the device to use by setting CUDA_VISIBLE_DEVICES env variable in
@@ -534,25 +598,25 @@ class TrainHardNet(object):
         labels, distances = [], []
 
         pbar = tqdm(enumerate(test_loader))
-        with torch.no_grad():
-            for batch_idx, (data_a, data_p, label) in pbar:
+        for batch_idx, (data_a, data_p, label) in pbar:
 
-                if self.args.cuda:
-                    data_a, data_p = data_a.cuda(), data_p.cuda()
+            if self.args.cuda:
+                data_a, data_p = data_a.cuda(), data_p.cuda()
 
+            with torch.no_grad():
                 data_a, data_p, label = Variable(data_a), \
                                         Variable(data_p), Variable(label)
                 out_a = model(data_a)
                 out_p = model(data_p)
-                dists = torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
-                distances.append(dists.data.cpu().numpy().reshape(-1,1))
-                ll = label.data.cpu().numpy().reshape(-1, 1)
-                labels.append(ll)
+            dists = torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
+            distances.append(dists.data.cpu().numpy().reshape(-1,1))
+            ll = label.data.cpu().numpy().reshape(-1, 1)
+            labels.append(ll)
 
-                if batch_idx % self.args.log_interval == 0:
-                    pbar.set_description(logger_test_name+' Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
-                        epoch, batch_idx * len(data_a), len(test_loader.dataset),
-                            100. * batch_idx / len(test_loader)))
+            if batch_idx % self.args.log_interval == 0:
+                pbar.set_description(logger_test_name+' Test Epoch: {} [{}/{} ({:.0f}%)]'.format(
+                    epoch, batch_idx * len(data_a), len(test_loader.dataset),
+                        100. * batch_idx / len(test_loader)))
 
         num_tests = test_loader.dataset.matches.size(0)
         labels = np.vstack(labels).reshape(num_tests)

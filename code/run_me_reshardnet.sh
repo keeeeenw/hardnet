@@ -44,10 +44,31 @@ cd "$RUNPATH"
 # # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=yosemite_train_with_aug/ --training-set=yosemite $@ | tee -a "$DATALOGS/yosemite_log_HardNetPlus_Lib.log"
 
 # Adam, 10 epoch
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=res_hardnet_liberty_train_adam/ --model-variant=reshardnet --optimizer=adam --epochs=10
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=res_hardnet_liberty_train_adam/ --model-variant=reshardnet --optimizer=adam --epochs=10
+
+# ResNet34, SGD, 10 epoch
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=res34_hardnet_liberty_train/ --model-variant=reshardnet34 --epochs=10
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug/ --model-variant=reshardnet34 --epochs=10
 
 # ResNet34, Adam, 10 epoch
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=res_hardnet_liberty_train_adam/ --model-variant=reshardnet34 --optimizer=adam --epochs=5
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_adam/ --model-variant=reshardnet34 --epochs=10
+
+# ResNet50, SGD, 10 epoch
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res50_hardnet_liberty_train_with_aug/ --model-variant=reshardnet50 --epochs=10
+
+# ResNet101, SGD, 10 epoch
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res101_hardnet_liberty_train_with_aug/ --model-variant=reshardnet101 --epochs=10
+
+# ResNet34, Adam, 10 epoch
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_adam/ --optimizer=adam --model-variant=reshardnet34 --epochs=10
+
+# ResNet34, SGD, 10 epoch --training-set=notredame
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=res34_hardnet_notredame_train/ --training-set=notredame --model-variant=reshardnet34 --epochs=10
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_notredame_train_with_aug/ --training-set=notredame --model-variant=reshardnet34 --epochs=10
+
+# ResNet34, SGD, 10 epoch --training-set=yosemite
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=res34_hardnet_yosemite_train/ --training-set=yosemite --model-variant=reshardnet34 --epochs=10
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_yosemite_train_with_aug/ --training-set=yosemite --model-variant=reshardnet34 --epochs=10
 
 # Adam, 10 epoch, resnet zero_init_residual True
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=res_hardnet_liberty_train_adam/ --model-variant=reshardnet --optimizer=adam --epochs=5
