@@ -22,12 +22,12 @@ mkdir -p "$DATALOGS"
 cd "$RUNPATH"
 
 # SGD, 10 epoch
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=densenet121_hardnet_liberty_train/ --model-variant=densenet121 --epochs=10
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=densenet121_hardnet_liberty_train/ --model-variant=densenet121 --epochs=10
 python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=densenet121_hardnet_liberty_train_with_aug/ --model-variant=densenet121 --epochs=10
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=densenet121_hardnet_notredame_train/ --training-set=notredame --model-variant=densenet121 --epochs=10
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=densenet121_hardnet_notredame_train_with_aug/ --training-set=notredame --model-variant=densenet121 --epochs=10
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=densenet121_hardnet_notredame_train/ --training-set=notredame --model-variant=densenet121 --epochs=10
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=densenet121_hardnet_notredame_train_with_aug/ --training-set=notredame --model-variant=densenet121 --epochs=10
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=densenet121_hardnet_yosemite_train/ --training-set=yosemite  --model-variant=densenet121 --epochs=10
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=densenet121_hardnet_yosemite_train_with_aug/ --training-set=yosemite --model-variant=densenet121 --epochs=10
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=densenet121_hardnet_yosemite_train/ --training-set=yosemite  --model-variant=densenet121 --epochs=10
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=densenet121_hardnet_yosemite_train_with_aug/ --training-set=yosemite --model-variant=densenet121 --epochs=10
 

@@ -44,11 +44,12 @@ from Losses import loss_HardNet, loss_random_sampling, loss_L2Net, global_orthog
 from W1BS import w1bs_extract_descs_and_save
 from Utils import L2Norm, cv2_scale, np_reshape
 from Utils import str2bool
+import utils.w1bs as w1bs
 import torch.nn as nn
 import torch.nn.functional as F
 
 # ResNet improvements
-from ResNetMono import resnet18, resnet34
+from ResNetMono import resnet18, resnet34, resnet50, resnet101
 # DenseNet improvements
 from DenseNetMono import densenet121
 
@@ -213,77 +214,22 @@ class HardNet(nn.Module):
 class ResHardNet(nn.Module):
     """ResHardNet model definition
     """
-    def __init__(self, pretrained=False):
+    def __init__(self, pretrained=False, model="reshardnet"):
         super(ResHardNet, self).__init__()
         # by default resnet outputs 1000 classes
-        # do not use if / else here. otherwise you won't be able to save the model weights
-        self.features = resnet18(pretrained=pretrained, progress=True, num_classes=128)
-        return
-    
-    def input_norm(self,x):
-        flat = x.view(x.size(0), -1)
-        mp = torch.mean(flat, dim=1)
-        sp = torch.std(flat, dim=1) + 1e-7
-        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
-    
-    def forward(self, input):
-        x_features = self.features(self.input_norm(input))
-        x = x_features.view(x_features.size(0), -1)
-        return L2Norm()(x)
 
-# I am duplicating models to allow us to save properly
-class ResHardNet34(nn.Module):
-    """ResHardNet model definition
-    """
-    def __init__(self, pretrained=False):
-        super(ResHardNet34, self).__init__()
-        # by default resnet outputs 1000 classes
-        # do not use if / else here. otherwise you won't be able to save the model weights
-        self.features = resnet34(pretrained=pretrained, progress=True, num_classes=128)
-        return
-    
-    def input_norm(self,x):
-        flat = x.view(x.size(0), -1)
-        mp = torch.mean(flat, dim=1)
-        sp = torch.std(flat, dim=1) + 1e-7
-        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
-    
-    def forward(self, input):
-        x_features = self.features(self.input_norm(input))
-        x = x_features.view(x_features.size(0), -1)
-        return L2Norm()(x)
-
-# I am duplicating models to allow us to save properly
-class ResHardNet50(nn.Module):
-    """ResHardNet model definition
-    """
-    def __init__(self, pretrained=False):
-        super(ResHardNet50, self).__init__()
-        # by default resnet outputs 1000 classes
-        # do not use if / else here. otherwise you won't be able to save the model weights
-        self.features = resnet50(pretrained=pretrained, progress=True, num_classes=128)
-        return
-    
-    def input_norm(self,x):
-        flat = x.view(x.size(0), -1)
-        mp = torch.mean(flat, dim=1)
-        sp = torch.std(flat, dim=1) + 1e-7
-        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
-    
-    def forward(self, input):
-        x_features = self.features(self.input_norm(input))
-        x = x_features.view(x_features.size(0), -1)
-        return L2Norm()(x)
-
-# I am duplicating models to allow us to save properly
-class ResHardNet101(nn.Module):
-    """ResHardNet model definition
-    """
-    def __init__(self, pretrained=False):
-        super(ResHardNet101, self).__init__()
-        # by default resnet outputs 1000 classes
-        # do not use if / else here. otherwise you won't be able to save the model weights
-        self.features = resnet101(pretrained=pretrained, progress=True, num_classes=128)
+        if (model == "reshardnet"):
+            print("Creating ResNet 18 Model")
+            self.features = resnet18(pretrained=pretrained, progress=True, num_classes=128)
+        elif (model == "reshardnet34"):
+            print("Creating ResNet 34 Model")
+            self.features = resnet34(pretrained=pretrained, progress=True, num_classes=128)
+        elif (model == "reshardnet50"):
+            print("Creating ResNet 50 Model")
+            self.features = resnet50(pretrained=pretrained, progress=True, num_classes=128)
+        elif (model == "reshardnet101"):
+            print("Creating ResNet 101 Model")
+            self.features = resnet101(pretrained=pretrained, progress=True, num_classes=128)
         return
     
     def input_norm(self,x):
@@ -303,6 +249,7 @@ class DenseHardNet(nn.Module):
     def __init__(self, pretrained=False, model="densenet121"):
         super(DenseHardNet, self).__init__()
         # by default desnet outputs 1000 classes
+        print("Creating dense 121 Model")
         self.features = densenet121(pretrained=pretrained, progress=True, num_classes=128)
         return
     
@@ -423,16 +370,10 @@ class TrainHardNet(object):
         else:
             self.args = args
         
-        if self.args.model_variant == "reshardnet":
-            self.model = ResHardNet(self.args.pre_trained)
-        elif self.args.model_variant == "resnet34":
-            self.model = ResHardNet34(self.args.pre_trained)
-        elif self.args.model_variant == "resnet50":
-            self.model = ResHardNet50(self.args.pre_trained)
-        elif self.args.model_variant == "resnet101":
-            self.model = ResHardNet101(self.args.pre_trained)
-        elif self.args.model_variant == "densenet121":
-            self.model = DenseHardNet(self.args.pre_trained)
+        if self.args.model_variant.startswith("reshardnet"):
+            self.model = ResHardNet(self.args.pre_trained, self.args.model_variant)
+        elif self.args.model_variant.startswith("densenet"):
+            self.model = DenseHardNet(self.args.pre_trained, self.args.model_variant)
         else:
             self.model = HardNet()
 
@@ -444,9 +385,9 @@ class TrainHardNet(object):
 
         self.test_on_w1bs = False
         # check if path to w1bs dataset testing module exists
-        import utils.w1bs as w1bs
         if os.path.isdir(self.args.w1bsroot):
             sys.path.insert(0, self.args.w1bsroot)
+            import utils.w1bs as w1bs
             self.test_on_w1bs = True
 
         # set the device to use by setting CUDA_VISIBLE_DEVICES env variable in
