@@ -49,9 +49,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # ResNet improvements
-from ResNetMono import resnet18, resnet34, resnet50, resnet101
+from ResNetMono import resnet18, resnet34, resnet50, resnet101, reshardnet, reshardnetsmall
 # DenseNet improvements
 from DenseNetMono import densenet121
+
+from torchsummary import summary
 
 class CorrelationPenaltyLoss(nn.Module):
     def __init__(self):
@@ -214,22 +216,28 @@ class HardNet(nn.Module):
 class ResHardNet(nn.Module):
     """ResHardNet model definition
     """
-    def __init__(self, pretrained=False, model="reshardnet"):
+    def __init__(self, pretrained=False, model="reshardnet", dropout=0.0):
         super(ResHardNet, self).__init__()
         # by default resnet outputs 1000 classes
 
         if (model == "reshardnet"):
             print("Creating ResNet 18 Model")
-            self.features = resnet18(pretrained=pretrained, progress=True, num_classes=128)
+            self.features = resnet18(pretrained=pretrained, progress=True, num_classes=128, dropout=dropout)
         elif (model == "reshardnet34"):
             print("Creating ResNet 34 Model")
-            self.features = resnet34(pretrained=pretrained, progress=True, num_classes=128)
+            self.features = resnet34(pretrained=pretrained, progress=True, num_classes=128, dropout=dropout)
         elif (model == "reshardnet50"):
             print("Creating ResNet 50 Model")
-            self.features = resnet50(pretrained=pretrained, progress=True, num_classes=128)
+            self.features = resnet50(pretrained=pretrained, progress=True, num_classes=128, dropout=dropout)
         elif (model == "reshardnet101"):
             print("Creating ResNet 101 Model")
-            self.features = resnet101(pretrained=pretrained, progress=True, num_classes=128)
+            self.features = resnet101(pretrained=pretrained, progress=True, num_classes=128, dropout=dropout)
+        elif (model == "reshardnetdefault"):
+            print("Creating ResNet Hard")
+            self.features = reshardnet(dropout=dropout)
+        elif (model == "reshardnetdefaultsmall"):
+            print("Creating ResNet Hard Small")
+            self.features = reshardnetsmall(dropout=dropout)
         return
     
     def input_norm(self,x):
@@ -365,13 +373,15 @@ class TrainHardNet(object):
                                 metavar='mv', help='The model to use (default: hardnet)')
             parser.add_argument('--pre-trained', default=False, type=str2bool,
                                 metavar='pt', help='Use pretrained weights')
+            parser.add_argument('--dropout', default=0.0, type=float,
+                                metavar='dp', help='Dropout for various models')
 
             self.args = parser.parse_args()
         else:
             self.args = args
         
         if self.args.model_variant.startswith("reshardnet"):
-            self.model = ResHardNet(self.args.pre_trained, self.args.model_variant)
+            self.model = ResHardNet(self.args.pre_trained, self.args.model_variant, self.args.dropout)
         elif self.args.model_variant.startswith("densenet"):
             self.model = DenseHardNet(self.args.pre_trained, self.args.model_variant)
         else:
@@ -467,6 +477,7 @@ class TrainHardNet(object):
 
     def train(self, train_loader, model, optimizer, epoch, logger, load_triplets  = False):
         print("Training model")
+        print_summary = True
         # switch to train mode
         model.train()
         pbar = tqdm(enumerate(train_loader))
@@ -508,6 +519,11 @@ class TrainHardNet(object):
                 
             if self.args.gor:
                 loss += self.args.alpha*global_orthogonal_regularization(out_a, out_n)
+            
+            if print_summary:
+                with torch.no_grad():
+                    summary(model, input_size=(1, self.args.imageSize, self.args.imageSize))
+                print_summary = False
                 
             optimizer.zero_grad()
             loss.backward()

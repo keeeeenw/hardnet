@@ -49,8 +49,9 @@ def w1bs_extract_descs_and_save(input_img_fname, model, desc_name, mean_img=0.44
         data_a = torch.from_numpy(data_a)
         if cuda:
             data_a = data_a.cuda()
-        data_a = Variable(data_a, volatile=True)
-        out_a = model(data_a)
+        with torch.no_grad():
+            data_a = Variable(data_a)
+            out_a = model(data_a)
         outs.append(out_a.data.cpu().numpy().reshape(-1, 128))
     ###
     res_desc = np.concatenate(outs)
