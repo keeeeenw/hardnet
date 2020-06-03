@@ -49,7 +49,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # ResNet improvements
-from ResNetMono import resnet18, resnet34, resnet50, resnet101, reshardnet, reshardnetsmall
+from ResNetMono import resnet18, resnet34, resnet50, resnet101, reshardnet, reshardnetsmall, reshardnetsmall2
 # DenseNet improvements
 from DenseNetMono import densenet121
 
@@ -238,6 +238,9 @@ class ResHardNet(nn.Module):
         elif (model == "reshardnetdefaultsmall"):
             print("Creating ResNet Hard Small")
             self.features = reshardnetsmall(dropout=dropout)
+        elif (model == "reshardnetdefaultsmall2"):
+            print("Creating ResNet Hard Small")
+            self.features = reshardnetsmall2(dropout=dropout)
         return
     
     def input_norm(self,x):
@@ -417,6 +420,8 @@ class TrainHardNet(object):
         if not os.path.exists(self.args.log_dir):
             os.makedirs(self.args.log_dir)
 
+        self.print_summary = True
+
     def create_loaders(self, load_random_triplets = False):
 
         test_dataset_names = copy.copy(self.dataset_names)
@@ -477,7 +482,6 @@ class TrainHardNet(object):
 
     def train(self, train_loader, model, optimizer, epoch, logger, load_triplets  = False):
         print("Training model")
-        print_summary = True
         # switch to train mode
         model.train()
         pbar = tqdm(enumerate(train_loader))
@@ -520,10 +524,12 @@ class TrainHardNet(object):
             if self.args.gor:
                 loss += self.args.alpha*global_orthogonal_regularization(out_a, out_n)
             
-            if print_summary:
+            if self.print_summary:
                 with torch.no_grad():
+                    # We can only do it here because the input are only switched
+                    # to cuda types above.
                     summary(model, input_size=(1, self.args.imageSize, self.args.imageSize))
-                print_summary = False
+                self.print_summary = False
                 
             optimizer.zero_grad()
             loss.backward()

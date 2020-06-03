@@ -380,10 +380,10 @@ class ResNetHardSmall(nn.Module):
         layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
                             self.base_width, previous_dilation, norm_layer))
         self.inplanes = planes * block.expansion
-        # for _ in range(2, blocks):
-        #     layers.append(block(self.inplanes, planes, groups=self.groups,
-        #                         base_width=self.base_width, dilation=self.dilation,
-        #                         norm_layer=norm_layer))
+        for _ in range(0, blocks):
+            layers.append(block(self.inplanes, planes, groups=self.groups,
+                                base_width=self.base_width, dilation=self.dilation,
+                                norm_layer=norm_layer))
         
         if dropout > 0.0:
             print("Confirming dropout layer with p", dropout)
@@ -411,6 +411,13 @@ class ResNetHardSmall(nn.Module):
 
 def reshardnetsmall(dropout=0.0):
     # One block has two conv filters
+    # Use 0 for no block repeat.
+    print("Creating reshardnetsmall")
+    return ResNetHardSmall(BasicBlock, [0, 0, 0, 0], dropout=dropout)
+
+def reshardnetsmall2(dropout=0.0):
+    # One block has two conv filters
+    print("Creating reshardnetsmall 2")
     return ResNetHardSmall(BasicBlock, [1, 1, 1, 1], dropout=dropout)
 
 def _resnet(arch, block, layers, pretrained, progress, **kwargs):
