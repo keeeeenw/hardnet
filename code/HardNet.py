@@ -378,6 +378,8 @@ class TrainHardNet(object):
                                 metavar='pt', help='Use pretrained weights')
             parser.add_argument('--dropout', default=0.0, type=float,
                                 metavar='dp', help='Dropout for various models')
+            parser.add_argument('--change-lr', default=True, type=str2bool,
+                                metavar='clr', help='Should change learning rate')
 
             self.args = parser.parse_args()
         else:
@@ -395,6 +397,8 @@ class TrainHardNet(object):
         self.triplet_flag = (self.args.batch_reduce == 'random_global') or self.args.gor
 
         self.dataset_names = ['liberty', 'notredame', 'yosemite']
+
+        self.change_lr = self.args.change_lr
 
         self.test_on_w1bs = False
         # check if path to w1bs dataset testing module exists
@@ -534,7 +538,8 @@ class TrainHardNet(object):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            self.adjust_learning_rate(optimizer)
+            if self.change_lr:
+                self.adjust_learning_rate(optimizer)
             if batch_idx % self.args.log_interval == 0:
                 pbar.set_description(
                     'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(

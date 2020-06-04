@@ -51,13 +51,8 @@ cd "$RUNPATH"
 
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefault_hardnet_liberty_train_with_aug_dropout_adam/ --model-variant=reshardnetdefault --epochs=10 --optimizer=adam --dropout=0.3
 
-# Reshardnet small
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout03/ --model-variant=reshardnetdefaultsmall --epochs=10 --dropout=0.3
-
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug/ --model-variant=reshardnetdefaultsmall --epochs=10
-
-# ResNet50, SGD, 10 epoch
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res50_hardnet_liberty_train_with_aug/ --model-variant=reshardnet50 --epochs=10
+# Reshardnetsmall2
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall2_hardnet_liberty_train_with_aug_dropout/ --model-variant=reshardnetdefaultsmall2 --dropout=0.3
 
 # Dropout enabled
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_dropout_03/ --model-variant=reshardnet34 --epochs=10 --dropout=0.3
@@ -66,11 +61,11 @@ python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/"
 
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_dropout_03_adam/ --model-variant=reshardnet34 --epochs=10 --dropout=0.3 --optimizer=adam 
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_dropout_03_adam_r0001/ --model-variant=reshardnet34 --epochs=10 --dropout=0.3 --optimizer=adam --lr=0.001
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_dropout_03_adam_r0001/ --model-variant=reshardnet34 --epochs=10 --dropout=0.3 --optimizer=adam --lr=0.001
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_dropout_03_r01/ --model-variant=reshardnet34 --epochs=10 --dropout=0.3 --lr=0.1
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_dropout_03_r01/ --model-variant=reshardnet34 --epochs=10 --dropout=0.3 --lr=0.1
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_dropout_03_r001/ --model-variant=reshardnet34 --epochs=10 --dropout=0.3 --lr=0.01
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_dropout_03_r001/ --model-variant=reshardnet34 --epochs=10 --dropout=0.3 --lr=0.01
 
 # # ResNet34, Adam, 10 epoch
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_adam/ --optimizer=adam --model-variant=reshardnet34 --epochs=10
@@ -91,17 +86,16 @@ python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/"
 
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_sgd_01/ --model-variant=reshardnet34 --epochs=10 --lr=0.1
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_sgd_001/ --model-variant=reshardnet34 --epochs=10 --lr=0.01
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_sgd_001/ --model-variant=reshardnet34 --epochs=10 --lr=0.01
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_sgd_0001/ --model-variant=reshardnet34 --epochs=10 --lr=0.001
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_sgd_0001/ --model-variant=reshardnet34 --epochs=10 --lr=0.001
 
+# # Different batch sizes
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_batch_128/ --optimizer=adam --model-variant=reshardnet34 --epochs=3 --batch-size=128
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_batch_512/ --optimizer=adam --model-variant=reshardnet34 --epochs=3 --batch-size=512
 
-# Different batch sizes
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_batch_128/ --optimizer=adam --model-variant=reshardnet34 --epochs=3 --batch-size=128
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_batch_512/ --optimizer=adam --model-variant=reshardnet34 --epochs=3 --batch-size=512
-
-# ResNet34, SGD, 10 epoch, larger learning rate
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_sgd_01/ --model-variant=reshardnet34 --epochs=3 --lr=30
+# # ResNet34, SGD, 10 epoch, larger learning rate
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_sgd_01/ --model-variant=reshardnet34 --epochs=3 --lr=30
 
 # ResNet34, SGD, 10 epoch
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=False --experiment-name=res34_hardnet_liberty_train/ --model-variant=reshardnet34 --epochs=10
@@ -126,3 +120,19 @@ python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/"
 
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res34_hardnet_liberty_train_with_aug_test/ --model-variant=reshardnet34 --epochs=1 --n-triplets=5000 --enable-logging=False
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res_hardnet_liberty_train_with_aug_test/ --model-variant=reshardnet50 --epochs=1 --n-triplets=5000 --enable-logging=False
+
+# ResNet50, SGD, 10 epoch
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res50_hardnet_liberty_train_with_aug/ --model-variant=reshardnet50 --epochs=10
+
+# Parameter search for resdefaultsmall - this should be our best model
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout03/ --model-variant=reshardnetdefaultsmall --epochs=10 --dropout=0.3
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug/ --model-variant=reshardnetdefaultsmall --epochs=10
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam --change-lr=False
+
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam_no_lr_change_lr01/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam --change-lr=False --lr=0.1
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam_no_lr_change_lr001/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam --change-lr=False --lr=0.01
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam
+
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_droupout_lr_01/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --lr=0.1
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_lr_001/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --lr=0.01
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_droupout_eps_20/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=20
