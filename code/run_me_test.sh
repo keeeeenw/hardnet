@@ -29,4 +29,10 @@ cd "$RUNPATH"
 
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_test/ --model-variant=reshardnetdefaultsmall2 --epochs=1 --n-triplets=5000 --enable-logging=False
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam_no_lr_change_lr01/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam --change-lr=False --lr=0.1 --n-triplets=5000 --enable-logging=False
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam_no_lr_change_lr01/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam --change-lr=False --lr=0.1 --n-triplets=5000 --enable-logging=False
+
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout03_kaiming_test/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --initialization=kaiming --n-triplets=5000 --enable-logging=False
+
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaulttiny_hardnet_liberty_train_with_aug_dropout03_kaiming/ --model-variant=reshardnetdefaulttiny --dropout=0.3 --epochs=10 --initialization=kaiming --n-triplets=5000 --enable-logging=False
+
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilev2_hardnet_liberty_train_with_aug_kaiming/ --model-variant=mobilenet_v2 --epochs=10 --n-triplets=5000 --enable-logging=False

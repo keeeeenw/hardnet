@@ -107,7 +107,7 @@ class ResNet(nn.Module):
 
     def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None, dropout=0.0):
+                 norm_layer=None, dropout=0.0, fc=True):
         super(ResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
@@ -312,12 +312,13 @@ def reshardnet(dropout=0.0):
 class ResNetHardSmall(nn.Module):
     def __init__(self, block, layers, num_classes=128, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None, dropout=0.0):
+                 norm_layer=None, dropout=0.0, tiny=False, initialization="hardnet"):
         super(ResNetHardSmall, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
-
+        self.tiny = tiny
+        self.initialization = initialization
         self.inplanes = 1
         self.dilation = 1
         if replace_stride_with_dilation is None:
@@ -329,26 +330,28 @@ class ResNetHardSmall(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        # self.conv1 = nn.Conv2d(1, self.inplanes, kernel_size=3, stride=1, padding=1,
-        #                        bias=False)
-        # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        # self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU()
         self.layer1 = self._make_layer(block, 32, layers[0])
         self.layer2 = self._make_layer(block, 64, layers[1],  stride=2)
-        self.layer3 = self._make_layer(block, 128, layers[2], stride=2, dropout=dropout)
+        if not tiny:
+            print("Created tiny with layer3 with 128 channels skipped")
+            self.layer3 = self._make_layer(block, 128, layers[2], stride=2, dropout=dropout)
         # Same as hardnet, notice the kernel size of 8
-        self.layer4 = nn.Conv2d(128, 128, kernel_size=8, bias = False)
+        self.layer4 = nn.Conv2d(self.inplanes, 128, kernel_size=8, bias = False)
         self.bn5 = norm_layer(128)
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                # hardnet initialization
-                nn.init.orthogonal(m.weight.data, gain=0.6)
-                try:
-                    nn.init.constant(m.bias.data, 0.01)
-                except:
-                    pass
+                if self.initialization == "hardnet":
+                    print("Using hardnet initialization")
+                    # hardnet initialization
+                    nn.init.orthogonal(m.weight.data, gain=0.6)
+                    try:
+                        nn.init.constant(m.bias.data, 0.01)
+                    except:
+                        pass
+                elif self.initialization == "kaiming":
+                    print("Using kaiming initialization")
+                    nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
@@ -392,15 +395,10 @@ class ResNetHardSmall(nn.Module):
         return nn.Sequential(*layers)
 
     def _forward_impl(self, x):
-        # See note [TorchScript super()]
-        # x = self.conv1(x)
-        # x = self.bn1(x)
-        # x = self.relu(x)
-        # x = self.maxpool(x)
-
         x = self.layer1(x)
         x = self.layer2(x)
-        x = self.layer3(x)
+        if not self.tiny:
+            x = self.layer3(x)
         x = self.layer4(x)
         x = self.bn5(x)
 
@@ -409,11 +407,17 @@ class ResNetHardSmall(nn.Module):
     def forward(self, x):
         return self._forward_impl(x)
 
-def reshardnetsmall(dropout=0.0):
+def reshardnetstiny(dropout=0.0, initialization="hardnet"):
     # One block has two conv filters
     # Use 0 for no block repeat.
     print("Creating reshardnetsmall")
-    return ResNetHardSmall(BasicBlock, [0, 0, 0, 0], dropout=dropout)
+    return ResNetHardSmall(BasicBlock, [0, 0, 0, 0], dropout=dropout, tiny=True, initialization=initialization)
+
+def reshardnetsmall(dropout=0.0, initialization="hardnet"):
+    # One block has two conv filters
+    # Use 0 for no block repeat.
+    print("Creating reshardnetsmall")
+    return ResNetHardSmall(BasicBlock, [0, 0, 0, 0], dropout=dropout, initialization=initialization)
 
 def reshardnetsmall2(dropout=0.0):
     # One block has two conv filters

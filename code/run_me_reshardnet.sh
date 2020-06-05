@@ -124,15 +124,30 @@ cd "$RUNPATH"
 # ResNet50, SGD, 10 epoch
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=res50_hardnet_liberty_train_with_aug/ --model-variant=reshardnet50 --epochs=10
 
-# Parameter search for resdefaultsmall - this should be our best model
+# Parameter search for resdefaultsmall - best model 06/03 with ~0.0068 FPR95 for notredame
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout03/ --model-variant=reshardnetdefaultsmall --epochs=10 --dropout=0.3
+
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug/ --model-variant=reshardnetdefaultsmall --epochs=10
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam --change-lr=False
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam_no_lr_change_lr01/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam --change-lr=False --lr=0.1
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam_no_lr_change_lr001/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam --change-lr=False --lr=0.01
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam_no_lr_change_lr01/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam --change-lr=False --lr=0.1
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam_no_lr_change_lr001/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam --change-lr=False --lr=0.01
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_adam/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --optimizer=adam
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_droupout_lr_01/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --lr=0.1
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_lr_001/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --lr=0.01
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_droupout_eps_20/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=20
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_droupout_lr_01/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --lr=0.1
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_lr_001/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --lr=0.01
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout_droupout_eps_20/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=20
+
+# mobilenet v2
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilev2_hardnet_liberty_train_with_aug_kaiming/ --model-variant=mobilenet_v2 --epochs=10
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilev2_hardnet_liberty_train_with_aug_kaiming_adam/ --model-variant=mobilenet_v2 --epochs=10 --optimizer=adam
+
+# resdefaulttiny
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaulttiny_hardnet_liberty_train_with_aug/ --model-variant=reshardnetdefaulttiny --epochs=10
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaulttiny_hardnet_liberty_train_with_aug_dropout03/ --model-variant=reshardnetdefaulttiny --dropout=0.3 --epochs=10
+
+# resdefaultsmall with kaiming initialization
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout03_kaiming/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --initialization=kaiming
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout03_kaiming_lr01/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --initialization=kaiming --lr=0.1
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout03_kaiming_adam/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --initialization=kaiming --optimizer=adam
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=resdefaultsmall_hardnet_liberty_train_with_aug_dropout03_kaiming_adam_lr01/ --model-variant=reshardnetdefaultsmall --dropout=0.3 --epochs=10 --initialization=kaiming --optimizer=adam --lr=0.1

@@ -49,9 +49,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # ResNet improvements
-from ResNetMono import resnet18, resnet34, resnet50, resnet101, reshardnet, reshardnetsmall, reshardnetsmall2
+from ResNetMono import resnet18, resnet34, resnet50, resnet101, reshardnet, reshardnetsmall, reshardnetsmall2, reshardnetstiny
 # DenseNet improvements
 from DenseNetMono import densenet121
+# MoileNet improvements
+from MobileNetMono import mobilenet_v2
 
 from torchsummary import summary
 
@@ -216,7 +218,7 @@ class HardNet(nn.Module):
 class ResHardNet(nn.Module):
     """ResHardNet model definition
     """
-    def __init__(self, pretrained=False, model="reshardnet", dropout=0.0):
+    def __init__(self, pretrained=False, model="reshardnet", dropout=0.0, initialization="hardnet"):
         super(ResHardNet, self).__init__()
         # by default resnet outputs 1000 classes
 
@@ -237,10 +239,13 @@ class ResHardNet(nn.Module):
             self.features = reshardnet(dropout=dropout)
         elif (model == "reshardnetdefaultsmall"):
             print("Creating ResNet Hard Small")
-            self.features = reshardnetsmall(dropout=dropout)
+            self.features = reshardnetsmall(dropout=dropout, initialization=initialization)
         elif (model == "reshardnetdefaultsmall2"):
             print("Creating ResNet Hard Small")
             self.features = reshardnetsmall2(dropout=dropout)
+        elif (model == "reshardnetdefaulttiny"):
+            print("Creating ResNet Hard Tiny")
+            self.features = reshardnetstiny(dropout=dropout, initialization=initialization)
         return
     
     def input_norm(self,x):
@@ -262,6 +267,27 @@ class DenseHardNet(nn.Module):
         # by default desnet outputs 1000 classes
         print("Creating dense 121 Model")
         self.features = densenet121(pretrained=pretrained, progress=True, num_classes=128)
+        return
+    
+    def input_norm(self,x):
+        flat = x.view(x.size(0), -1)
+        mp = torch.mean(flat, dim=1)
+        sp = torch.std(flat, dim=1) + 1e-7
+        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
+    
+    def forward(self, input):
+        x_features = self.features(self.input_norm(input))
+        x = x_features.view(x_features.size(0), -1)
+        return L2Norm()(x)
+
+class MobileV2HardNet(nn.Module):
+    """DenseHardNet model definition
+    """
+    def __init__(self, pretrained=False, model="mobilenet_v2"):
+        super(MobileV2HardNet, self).__init__()
+        # by default desnet outputs 1000 classes
+        print("Creating MobileNet V2 Model")
+        self.features = mobilenet_v2(pretrained=pretrained, progress=True, num_classes=128)
         return
     
     def input_norm(self,x):
@@ -380,15 +406,19 @@ class TrainHardNet(object):
                                 metavar='dp', help='Dropout for various models')
             parser.add_argument('--change-lr', default=True, type=str2bool,
                                 metavar='clr', help='Should change learning rate')
+            parser.add_argument('--initialization', default='hardnet', type=str,
+                                metavar='init', help='Initilaization method for selective models')
 
             self.args = parser.parse_args()
         else:
             self.args = args
         
         if self.args.model_variant.startswith("reshardnet"):
-            self.model = ResHardNet(self.args.pre_trained, self.args.model_variant, self.args.dropout)
+            self.model = ResHardNet(self.args.pre_trained, self.args.model_variant, self.args.dropout, self.args.initialization)
         elif self.args.model_variant.startswith("densenet"):
             self.model = DenseHardNet(self.args.pre_trained, self.args.model_variant)
+        elif self.args.model_variant.startswith("mobilenet_v2"):
+            self.model = MobileV2HardNet(self.args.pre_trained, self.args.model_variant)
         else:
             self.model = HardNet()
 
