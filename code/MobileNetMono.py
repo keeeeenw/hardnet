@@ -21,8 +21,9 @@ def _make_divisible(v, divisor, min_value=None):
 
 
 class ConvBNReLU(nn.Sequential):
-    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1, norm_layer=None):
-        padding = (kernel_size - 1) // 2
+    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1, padding=None, norm_layer=None):
+        if padding is None:
+            padding = (kernel_size - 1) // 2
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         super(ConvBNReLU, self).__init__(
@@ -71,7 +72,10 @@ class MobileNetV2(nn.Module):
                  inverted_residual_setting=None,
                  round_nearest=8,
                  block=None,
-                 norm_layer=None):
+                 norm_layer=None,
+                 include_classifier=True,
+                 final_kernal_size=2,
+                 final_padding=None):
         """
         MobileNet V2 main class
         Args:
@@ -105,6 +109,8 @@ class MobileNetV2(nn.Module):
                 [6, 160, 3, 2],
                 [6, 320, 1, 1],
             ]
+        else:
+            print("Use custom inverted_residual_setting")
 
         # only check the first element, assuming user knows t,c,n,s are required
         if len(inverted_residual_setting) == 0 or len(inverted_residual_setting[0]) != 4:
@@ -123,15 +129,24 @@ class MobileNetV2(nn.Module):
                 features.append(block(input_channel, output_channel, stride, expand_ratio=t, norm_layer=norm_layer))
                 input_channel = output_channel
         # building last several layers
-        features.append(ConvBNReLU(input_channel, self.last_channel, kernel_size=1, norm_layer=norm_layer))
+        self.include_classifier = include_classifier
+        if self.include_classifier:
+            features.append(ConvBNReLU(input_channel, self.last_channel, kernel_size=1, norm_layer=norm_layer))
+        else:
+            features.append(ConvBNReLU(input_channel, 128, kernel_size=final_kernal_size, padding=final_padding, norm_layer=norm_layer))
         # make it nn.Sequential
         self.features = nn.Sequential(*features)
 
         # building classifier
-        self.classifier = nn.Sequential(
-            nn.Dropout(0.2),
-            nn.Linear(self.last_channel, num_classes),
-        )
+        if self.include_classifier:
+            self.classifier = nn.Sequential(
+                nn.Dropout(0.2),
+                nn.Linear(self.last_channel, num_classes),
+            )
+        # else:
+        #     self.final_drop = nn.Dropout(0.3)
+        #     self.final_cnn = nn.Conv2d(320, 128, kernel_size=2, bias = False)
+        #     self.final_bn = nn.BatchNorm2d(128)
 
         # weight initialization
         for m in self.modules():
@@ -150,9 +165,14 @@ class MobileNetV2(nn.Module):
         # This exists since TorchScript doesn't support inheritance, so the superclass method
         # (this one) needs to have a name other than `forward` that can be accessed in a subclass
         x = self.features(x)
-        # Cannot use "squeeze" as batch-size can be 1 => must use reshape with x.shape[0]
-        x = nn.functional.adaptive_avg_pool2d(x, 1).reshape(x.shape[0], -1)
-        x = self.classifier(x)
+        if self.include_classifier:
+            # Cannot use "squeeze" as batch-size can be 1 => must use reshape with x.shape[0]
+            x = nn.functional.adaptive_avg_pool2d(x, 1).reshape(x.shape[0], -1)
+            x = self.classifier(x)
+        # else:
+        #     x = self.final_drop(x)
+        #     x = self.final_cnn(x)
+        #     x = self.final_bn(x)
         return x
 
     def forward(self, x):
@@ -179,5 +199,26 @@ def mobilenet_v2_reduced(pretrained=False, progress=True, **kwargs):
     Mimic Hardnet structure without the finally nn.Linear layer
     and smaller last layer
     """
-    model = MobileNetV2(**kwargs)
+    inverted_residual_setting = [
+        # t, c, n, s
+        [1, 32, 1, 1],
+        [6, 32, 1, 2],
+        [6, 64, 2, 2],
+        [6, 128, 2, 2]
+    ]
+    model = MobileNetV2(num_classes=128, inverted_residual_setting=inverted_residual_setting, include_classifier=False, **kwargs)
+    return model
+
+def mobilenet_v2_tiny(pretrained=False, progress=True, **kwargs):
+    """
+    Mimic Hardnet structure without the finally nn.Linear layer
+    and smaller last layer
+    """
+    inverted_residual_setting = [
+        # t, c, n, s
+        [1, 32, 2, 1],
+        [1, 64, 2, 2],
+        [1, 128, 2, 2]
+    ]
+    model = MobileNetV2(num_classes=128, round_nearest=32, inverted_residual_setting=inverted_residual_setting, include_classifier=False, final_kernal_size=4, final_padding=0, **kwargs)
     return model

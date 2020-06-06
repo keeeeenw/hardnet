@@ -45,7 +45,6 @@ from SOSLoss import loss_SOSNet
 from W1BS import w1bs_extract_descs_and_save
 from Utils import L2Norm, cv2_scale, np_reshape
 from Utils import str2bool
-import utils.w1bs as w1bs
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -54,7 +53,7 @@ from ResNetMono import resnet18, resnet34, resnet50, resnet101, reshardnet, resh
 # DenseNet improvements
 from DenseNetMono import densenet121
 # MoileNet improvements
-from MobileNetMono import mobilenet_v2
+from MobileNetMono import mobilenet_v2, mobilenet_v2_reduced, mobilenet_v2_tiny
 
 from torchsummary import summary
 
@@ -216,6 +215,101 @@ class HardNet(nn.Module):
         x = x_features.view(x_features.size(0), -1)
         return L2Norm()(x)
 
+class HardNetLarge(nn.Module):
+    """HardNetTiny model definition
+    """
+    def __init__(self):
+        super(HardNetLarge, self).__init__()
+        print("Creating HardNetLarge model")
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(32, affine=False),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(32, affine=False),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1, bias = False),
+            nn.BatchNorm2d(64, affine=False),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(64, affine=False),
+            nn.ReLU(),
+            # (16 + 2 - 3) / 2 + 1 = 8 filter size
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1, bias = False),
+            nn.BatchNorm2d(128, affine=False),
+            nn.ReLU(),
+            # (8 + 2 - 3) / 1 + 1 = 8
+            nn.Conv2d(128, 128, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(128, affine=False),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            # (8 + 2 - 3) / 2 + 1 = 4
+            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1, bias = False),
+            nn.BatchNorm2d(256, affine=False),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(256, affine=False),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Conv2d(256, 128, kernel_size=4, bias = False),
+            nn.BatchNorm2d(128, affine=False),
+        )
+        print("Initializing weights")
+        self.features.apply(weights_init)
+        return
+    
+    def input_norm(self,x):
+        flat = x.view(x.size(0), -1)
+        mp = torch.mean(flat, dim=1)
+        sp = torch.std(flat, dim=1) + 1e-7
+        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
+    
+    def forward(self, input):
+        x_features = self.features(self.input_norm(input))
+        x = x_features.view(x_features.size(0), -1)
+        return L2Norm()(x)
+
+class HardNetTiny(nn.Module):
+    """HardNetTiny model definition
+    """
+    def __init__(self, dropout=0.0):
+        super(HardNetTiny, self).__init__()
+        print("Creating HardNetTiny model with dropout p=", dropout)
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(32, affine=False),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(32, affine=False),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1, bias = False),
+            nn.BatchNorm2d(64, affine=False),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(64, affine=False),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            # (16 - 8) + 1 = 9 filter size is wrong. We need to output filter size of 1.
+            # nn.Conv2d(64, 128, kernel_size=8, bias = False),
+            nn.Conv2d(64, 128, kernel_size=16, bias = False),
+            nn.BatchNorm2d(128, affine=False),
+        )
+        print("Initializing weights")
+        self.features.apply(weights_init)
+        return
+    
+    def input_norm(self,x):
+        flat = x.view(x.size(0), -1)
+        mp = torch.mean(flat, dim=1)
+        sp = torch.std(flat, dim=1) + 1e-7
+        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
+    
+    def forward(self, input):
+        x_features = self.features(self.input_norm(input))
+        x = x_features.view(x_features.size(0), -1)
+        return L2Norm()(x)
+
 class ResHardNet(nn.Module):
     """ResHardNet model definition
     """
@@ -244,6 +338,12 @@ class ResHardNet(nn.Module):
         elif (model == "reshardnetdefaultsmall2"):
             print("Creating ResNet Hard Small")
             self.features = reshardnetsmall2(dropout=dropout)
+        elif (model == "reshardnetdefaultsmallfc"):
+            print("Creating ResNet Hard Small With Fully Connected Layer")
+            self.features = reshardnetsmall(dropout=dropout, initialization=initialization, fc=True)
+        elif (model == "reshardnetdefaultsmall2fc"):
+            print("Creating ResNet Hard Small 2 blocks With Fully Connected Layer")
+            self.features = reshardnetsmall2(dropout=dropout, initialization=initialization, fc=True)
         elif (model == "reshardnetdefaulttiny"):
             print("Creating ResNet Hard Tiny")
             self.features = reshardnetstiny(dropout=dropout, initialization=initialization)
@@ -287,8 +387,15 @@ class MobileV2HardNet(nn.Module):
     def __init__(self, pretrained=False, model="mobilenet_v2"):
         super(MobileV2HardNet, self).__init__()
         # by default desnet outputs 1000 classes
-        print("Creating MobileNet V2 Model")
-        self.features = mobilenet_v2(pretrained=pretrained, progress=True, num_classes=128)
+        if model == "mobilenet_v2_reduced":
+            print("Creating MobileNet V2 reduced Model")
+            self.features = mobilenet_v2_reduced(pretrained=pretrained, progress=True)
+        elif model == "mobilenet_v2_tiny":
+            print("Creating MobileNet V2 tiny Model")
+            self.features = mobilenet_v2_tiny(pretrained=pretrained, progress=True)
+        else:
+            print("Creating MobileNet V2 Model")
+            self.features = mobilenet_v2(pretrained=pretrained, progress=True, num_classes=128)
         return
     
     def input_norm(self,x):
@@ -420,6 +527,10 @@ class TrainHardNet(object):
             self.model = DenseHardNet(self.args.pre_trained, self.args.model_variant)
         elif self.args.model_variant.startswith("mobilenet_v2"):
             self.model = MobileV2HardNet(self.args.pre_trained, self.args.model_variant)
+        elif self.args.model_variant.startswith("hardnettiny"):
+            self.model = HardNetTiny(self.args.dropout)
+        elif self.args.model_variant.startswith("hardnetlarge"):
+            self.model = HardNetLarge()
         else:
             self.model = HardNet()
 
@@ -754,5 +865,6 @@ class TrainHardNet(object):
         self.execute(train_loader, test_loaders, self.model, logger, file_logger)
 
 if __name__ == '__main__':
+    import utils.w1bs as w1bs
     runner = TrainHardNet()
     runner.run()

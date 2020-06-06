@@ -132,7 +132,7 @@ class DenseNet(nn.Module):
     """
 
     def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
-                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, memory_efficient=False):
+                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, memory_efficient=False, include_classifier=True):
 
         super(DenseNet, self).__init__()
 
@@ -168,7 +168,9 @@ class DenseNet(nn.Module):
         self.features.add_module('norm5', nn.BatchNorm2d(num_features))
 
         # Linear layer
-        self.classifier = nn.Linear(num_features, num_classes)
+        self.include_classifier = include_classifier
+        if self.include_classifier:
+            self.classifier = nn.Linear(num_features, num_classes)
 
         # Official init from torch repo.
         for m in self.modules():
@@ -182,10 +184,13 @@ class DenseNet(nn.Module):
 
     def forward(self, x):
         features = self.features(x)
-        out = F.relu(features, inplace=True)
-        out = F.adaptive_avg_pool2d(out, (1, 1))
-        out = torch.flatten(out, 1)
-        out = self.classifier(out)
+        if self.include_classifier:
+            out = F.relu(features, inplace=True)
+            out = F.adaptive_avg_pool2d(out, (1, 1))
+            out = torch.flatten(out, 1)
+            out = self.classifier(out)
+        else:
+            out = features
         return out
 
 
@@ -213,6 +218,18 @@ def _densenet(arch, growth_rate, block_config, num_init_features, pretrained, pr
     if pretrained:
         _load_state_dict(model, model_urls[arch], progress)
     return model
+
+def densenet_reduced(pretrained=False, progress=True, **kwargs):
+    r"""Densenet-121 model from
+    `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        progress (bool): If True, displays a progress bar of the download to stderr
+        memory_efficient (bool) - If True, uses checkpointing. Much more memory efficient,
+          but slower. Default: *False*. See `"paper" <https://arxiv.org/pdf/1707.06990.pdf>`_
+    """
+    return _densenet('densenet_reduced', 32, (1, 1, 1, 1), 32, pretrained, progress,
+                     **kwargs)
 
 
 def densenet121(pretrained=False, progress=True, **kwargs):

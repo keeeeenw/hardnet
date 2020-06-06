@@ -312,12 +312,13 @@ def reshardnet(dropout=0.0):
 class ResNetHardSmall(nn.Module):
     def __init__(self, block, layers, num_classes=128, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None, dropout=0.0, tiny=False, initialization="hardnet"):
+                 norm_layer=None, dropout=0.0, tiny=False, initialization="hardnet", fc=False):
         super(ResNetHardSmall, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
         self.tiny = tiny
+        self.dropout = dropout
         self.initialization = initialization
         self.inplanes = 1
         self.dilation = 1
@@ -334,11 +335,18 @@ class ResNetHardSmall(nn.Module):
         self.layer1 = self._make_layer(block, 32, layers[0])
         self.layer2 = self._make_layer(block, 64, layers[1],  stride=2)
         if not tiny:
-            print("Created tiny with layer3 with 128 channels skipped")
             self.layer3 = self._make_layer(block, 128, layers[2], stride=2, dropout=dropout)
+        else:
+            print("Created tiny with layer3 skipped")
         # Same as hardnet, notice the kernel size of 8
-        self.layer4 = nn.Conv2d(self.inplanes, 128, kernel_size=8, bias = False)
-        self.bn5 = norm_layer(128)
+        if fc:
+            self.dropout = nn.Dropout(dropout)
+            self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+            self.fc = nn.Linear(128, num_classes)
+        else:
+            self.layer4 = nn.Conv2d(self.inplanes, 128, kernel_size=8, bias = False)
+            self.bn5 = norm_layer(128)
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 if self.initialization == "hardnet":
@@ -399,8 +407,14 @@ class ResNetHardSmall(nn.Module):
         x = self.layer2(x)
         if not self.tiny:
             x = self.layer3(x)
-        x = self.layer4(x)
-        x = self.bn5(x)
+        if self.fc is not None:
+            x = self.dropout(x)
+            x = self.avgpool(x)
+            x = torch.flatten(x, 1)
+            x = self.fc(x)
+        else:
+            x = self.layer4(x)
+            x = self.bn5(x)
 
         return x
 
@@ -413,16 +427,16 @@ def reshardnetstiny(dropout=0.0, initialization="hardnet"):
     print("Creating reshardnetsmall")
     return ResNetHardSmall(BasicBlock, [0, 0, 0, 0], dropout=dropout, tiny=True, initialization=initialization)
 
-def reshardnetsmall(dropout=0.0, initialization="hardnet"):
+def reshardnetsmall(dropout=0.0, initialization="hardnet", fc=False):
     # One block has two conv filters
     # Use 0 for no block repeat.
     print("Creating reshardnetsmall")
-    return ResNetHardSmall(BasicBlock, [0, 0, 0, 0], dropout=dropout, initialization=initialization)
+    return ResNetHardSmall(BasicBlock, [0, 0, 0, 0], dropout=dropout, initialization=initialization, fc=fc)
 
-def reshardnetsmall2(dropout=0.0):
+def reshardnetsmall2(dropout=0.0, initialization="hardnet", fc=False):
     # One block has two conv filters
     print("Creating reshardnetsmall 2")
-    return ResNetHardSmall(BasicBlock, [1, 1, 1, 1], dropout=dropout)
+    return ResNetHardSmall(BasicBlock, [1, 1, 1, 1], dropout=dropout, initialization=initialization, fc=fc)
 
 def _resnet(arch, block, layers, pretrained, progress, **kwargs):
     model = ResNet(block, layers, **kwargs)
