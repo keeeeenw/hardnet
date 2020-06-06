@@ -41,6 +41,7 @@ import copy
 import PIL
 from EvalMetrics import ErrorRateAt95Recall
 from Losses import loss_HardNet, loss_random_sampling, loss_L2Net, global_orthogonal_regularization
+from SOSLoss import loss_SOSNet
 from W1BS import w1bs_extract_descs_and_save
 from Utils import L2Norm, cv2_scale, np_reshape
 from Utils import str2bool
@@ -338,7 +339,7 @@ class TrainHardNet(object):
             parser.add_argument('--training-set', default= 'liberty',
                                 help='Other options: notredame, yosemite')
             parser.add_argument('--loss', default= 'triplet_margin',
-                                help='Other options: softmax, contrastive')
+                                help='Other options: softmax, contrastive, qht')
             parser.add_argument('--batch-reduce', default= 'min',
                                 help='Other options: average, random, random_global, L2Net')
             parser.add_argument('--num-workers', default= 0, type=int,
@@ -543,6 +544,11 @@ class TrainHardNet(object):
                     margin=self.args.margin,
                     anchor_swap=self.args.anchorswap,
                     loss_type = self.args.loss)
+            elif self.args.loss == 'qht':
+                loss = loss_SOSNet(out_a, out_p,
+                                   margin=self.args.margin,
+                                   batch_reduce=self.args.batch_reduce,
+                                   no_cuda=self.args.no_cuda)
             else:
                 loss = loss_HardNet(out_a, out_p,
                                 margin=self.args.margin,
