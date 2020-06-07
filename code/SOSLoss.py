@@ -29,8 +29,23 @@ def loss_SOSNet(anchor, positive, eps=1e-8, margin=1.0, batch_reduce='min', no_c
         print('Unknown batch reduce mode. Try min for SOS loss')
         sys.exit(1)
 
+    # regularization term
+    _, a_inds = aa_dist_matrix.topk(8)    # tensor of size [N, 8]
+    _, p_inds = pp_dist_matrix.topk(8)    # tensor of size [N, 8]
+    # take per-row union of a_inds and p_inds
+    union_inds = torch.cat((a_inds, p_inds), dim=1)
+    r = 0
+    for i in range(union_inds.shape[0]):
+        union_inds_i = torch.unique(union_inds[i])  # length of union_inds_i varies
+        r_i = 0
+        for j in union_inds_i:
+            r_i += torch.pow(aa_dist_matrix[i, j] - pp_dist_matrix[i, j], 2)  # ( d(ai, aj) - d(pi, pj) )^2
+        r += torch.sqrt(r_i)
+    r = r / anchor.shape[0]
+    # end of regularization term
+
     loss = torch.pow(torch.clamp(margin + pos - min_neg, min=0.0), 2)
-    return torch.mean(loss)
+    return torch.mean(loss) + r
 
 
 def mask_dist_matrix(dist_matrix, zero_val=0.008, mask_val=10, no_cuda=False):
