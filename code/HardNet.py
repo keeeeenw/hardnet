@@ -51,7 +51,7 @@ import torch.nn.functional as F
 # ResNet improvements
 from ResNetMono import resnet18, resnet34, resnet50, resnet101, reshardnet, reshardnetsmall, reshardnetsmall2, reshardnetstiny
 # DenseNet improvements
-from DenseNetMono import densenet121, densenet_reduced
+from DenseNetMono import densenet121, densenet_reduced, densenet_tiny
 # MoileNet improvements
 from MobileNetMono import mobilenet_v2, mobilenet_v2_reduced, mobilenet_v2_tiny
 
@@ -368,6 +368,9 @@ class DenseHardNet(nn.Module):
         if model == "densenet_reduced":
             print("Creating dense reduced Model")
             self.features = densenet_reduced(pretrained=pretrained, progress=True, num_classes=128)
+        elif model == "densenet_tiny":
+            print("Creating dense tiny Model")
+            self.features = densenet_tiny(pretrained=pretrained, progress=True, num_classes=128)
         else:
             print("Creating dense 121 Model")
             # by default desnet outputs 1000 classes

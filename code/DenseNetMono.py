@@ -132,7 +132,7 @@ class DenseNet(nn.Module):
     """
 
     def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
-                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, memory_efficient=False, is_original=True):
+                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, memory_efficient=False, is_original=True, is_tiny=False):
 
         super(DenseNet, self).__init__()
 
@@ -179,7 +179,10 @@ class DenseNet(nn.Module):
             # Linear layer
             self.classifier = nn.Linear(num_features, num_classes)
         else:
-            self.features.add_module('cnn_final', nn.Conv2d(64, 128, kernel_size=4, stride=1, bias=False))
+            if is_tiny:
+                self.features.add_module('cnn_final', nn.Conv2d(64, 128, kernel_size=8, stride=2, bias=False))
+            else:
+                self.features.add_module('cnn_final', nn.Conv2d(64, 128, kernel_size=4, stride=1, bias=False))
             self.features.add_module('norm5', nn.BatchNorm2d(128))
 
         # Official init from torch repo.
@@ -233,6 +236,9 @@ def densenet_reduced(pretrained=False, progress=True, **kwargs):
     return _densenet('densenet_reduced', 32, (1, 1, 1, 1), 32, pretrained, progress, is_original=False,
                      **kwargs)
 
+def densenet_tiny(pretrained=False, progress=True, **kwargs):
+    return _densenet('densenet_reduced', 32, (1, 1, 1), 32, pretrained, progress, is_original=False, is_tiny=True,
+                     **kwargs)
 
 def densenet121(pretrained=False, progress=True, **kwargs):
     r"""Densenet-121 model from
