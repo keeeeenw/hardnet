@@ -30,8 +30,8 @@ def loss_SOSNet(anchor, positive, eps=1e-8, margin=1.0, batch_reduce='min', no_c
         sys.exit(1)
 
     # regularization term
-    _, a_inds = aa_dist_matrix.topk(8)    # tensor of size [N, 8]
-    _, p_inds = pp_dist_matrix.topk(8)    # tensor of size [N, 8]
+    _, a_inds = aa_dist_matrix_masked.topk(8)    # tensor of size [N, 8]
+    _, p_inds = pp_dist_matrix_masked.topk(8)    # tensor of size [N, 8]
     # take per-row union of a_inds and p_inds
     union_inds = torch.cat((a_inds, p_inds), dim=1)
     r = 0
