@@ -160,6 +160,9 @@ cd "$RUNPATH"
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=hardnetlarge_liberty_train_with_aug_lr001/ --model-variant=hardnetlarge --epochs=10 --lr=0.01
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=hardnetlarge_liberty_train_with_aug_adam --model-variant=hardnetlarge --epochs=10 --optimizer=adam
 
+# densenet reduced
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=densenet_reduced_liberty_train_with_aug/ --model-variant=densenet_reduced --epochs=10
+
 # mobilenet reduced
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_reduced_liberty_train_with_aug/ --model-variant=mobilenet_v2_reduced --epochs=10
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_reduced_liberty_train_with_aug_adam/ --model-variant=mobilenet_v2_reduced --epochs=10 --optimizer=adam
@@ -167,10 +170,10 @@ cd "$RUNPATH"
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_reduced_liberty_train_with_aug_lr001/ --model-variant=mobilenet_v2_reduced --epochs=10 --lr=0.01
 
 # mobilenet tiny
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_tiny_liberty_train_with_aug/ --model-variant=mobilenet_v2_tiny --epochs=10
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_tiny_liberty_train_with_aug_adam/ --model-variant=mobilenet_v2_tiny --epochs=10 --optimizer=adam
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_tiny_liberty_train_with_aug_lr01/ --model-variant=mobilenet_v2_tiny --epochs=10 --lr=0.1
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_tiny_liberty_train_with_aug_lr001/ --model-variant=mobilenet_v2_tiny --epochs=10 --lr=0.01
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_tiny_liberty_train_with_aug/ --model-variant=mobilenet_v2_tiny --epochs=10
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_tiny_liberty_train_with_aug_adam/ --model-variant=mobilenet_v2_tiny --epochs=10 --optimizer=adam
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_tiny_liberty_train_with_aug_lr01/ --model-variant=mobilenet_v2_tiny --epochs=10 --lr=0.1
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_tiny_liberty_train_with_aug_lr001/ --model-variant=mobilenet_v2_tiny --epochs=10 --lr=0.01
 
 # reshardnetsmall fc layer
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=reshardnetdefaultsmallfc_liberty_train_with_aug/ --model-variant=reshardnetdefaultsmallfc --epochs=10

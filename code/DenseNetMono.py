@@ -132,18 +132,27 @@ class DenseNet(nn.Module):
     """
 
     def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
-                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, memory_efficient=False, include_classifier=True):
+                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, memory_efficient=False, is_original=True):
 
         super(DenseNet, self).__init__()
 
         # First convolution
-        self.features = nn.Sequential(OrderedDict([
-            ('conv0', nn.Conv2d(1, num_init_features, kernel_size=7, stride=2,
-                                padding=3, bias=False)),
-            ('norm0', nn.BatchNorm2d(num_init_features)),
-            ('relu0', nn.ReLU(inplace=True)),
-            ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
-        ]))
+        self.is_original = is_original
+        if self.is_original:
+            self.features = nn.Sequential(OrderedDict([
+                ('conv0', nn.Conv2d(1, num_init_features, kernel_size=7, stride=2,
+                                    padding=3, bias=False)),
+                ('norm0', nn.BatchNorm2d(num_init_features)),
+                ('relu0', nn.ReLU(inplace=True)),
+                ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
+            ]))
+        else:
+            self.features = nn.Sequential(OrderedDict([
+                ('conv0', nn.Conv2d(1, num_init_features, kernel_size=3, stride=1,
+                                    padding=1, bias=False)),
+                ('norm0', nn.BatchNorm2d(num_init_features)),
+                ('relu0', nn.ReLU(inplace=True)),
+            ]))
 
         # Each denseblock
         num_features = num_init_features
@@ -164,13 +173,14 @@ class DenseNet(nn.Module):
                 self.features.add_module('transition%d' % (i + 1), trans)
                 num_features = num_features // 2
 
-        # Final batch norm
-        self.features.add_module('norm5', nn.BatchNorm2d(num_features))
-
-        # Linear layer
-        self.include_classifier = include_classifier
-        if self.include_classifier:
+        if self.is_original:
+            # Final batch norm
+            self.features.add_module('norm5', nn.BatchNorm2d(num_features))
+            # Linear layer
             self.classifier = nn.Linear(num_features, num_classes)
+        else:
+            self.features.add_module('cnn_final', nn.Conv2d(64, 128, kernel_size=4, stride=1, bias=False))
+            self.features.add_module('norm5', nn.BatchNorm2d(128))
 
         # Official init from torch repo.
         for m in self.modules():
@@ -184,7 +194,7 @@ class DenseNet(nn.Module):
 
     def forward(self, x):
         features = self.features(x)
-        if self.include_classifier:
+        if self.is_original:
             out = F.relu(features, inplace=True)
             out = F.adaptive_avg_pool2d(out, (1, 1))
             out = torch.flatten(out, 1)
@@ -220,15 +230,7 @@ def _densenet(arch, growth_rate, block_config, num_init_features, pretrained, pr
     return model
 
 def densenet_reduced(pretrained=False, progress=True, **kwargs):
-    r"""Densenet-121 model from
-    `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
-        memory_efficient (bool) - If True, uses checkpointing. Much more memory efficient,
-          but slower. Default: *False*. See `"paper" <https://arxiv.org/pdf/1707.06990.pdf>`_
-    """
-    return _densenet('densenet_reduced', 32, (1, 1, 1, 1), 32, pretrained, progress,
+    return _densenet('densenet_reduced', 32, (1, 1, 1, 1), 32, pretrained, progress, is_original=False,
                      **kwargs)
 
 

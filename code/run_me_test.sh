@@ -47,4 +47,6 @@ cd "$RUNPATH"
 
 # python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_reduced_liberty_train_with_aug_droup03_test/ --model-variant=mobilenet_v2_reduced --epochs=10 --n-triplets=5000 --enable-logging=False
 
-python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_tiny_liberty_train_with_aug_droup03_test/ --model-variant=mobilenet_v2_tiny --epochs=10 --n-triplets=5000 --enable-logging=False
+# python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=mobilenet_v2_tiny_liberty_train_with_aug_droup03_test/ --model-variant=mobilenet_v2_tiny --epochs=10 --n-triplets=5000 --enable-logging=False
+
+python ./code/HardNet.py --w1bsroot "$DATASETS/wxbs-descriptors-benchmark/code/" --fliprot=True --experiment-name=densenet_reduced_liberty_train_with_aug_test/ --model-variant=densenet_reduced --epochs=10 --n-triplets=5000 --enable-logging=False
