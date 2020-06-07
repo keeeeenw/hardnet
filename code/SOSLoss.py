@@ -51,11 +51,11 @@ def loss_SOSNet(anchor, positive, eps=1e-8, margin=1.0, batch_reduce='min', no_c
 def mask_dist_matrix(dist_matrix, zero_val=0.008, mask_val=10, no_cuda=False):
     """adds a mask value to diagonal entries and negative entries to dist_matrix"""
     if no_cuda:
-        # eye = torch.autograd.Variable(torch.eye(dist_matrix.size(1)))
-        eye = torch.eye(dist_matrix.size(1))
+        eye = torch.autograd.Variable(torch.eye(dist_matrix.size(1)))
+        # eye = torch.eye(dist_matrix.size(1))
     else:
-        # eye = torch.autograd.Variable(torch.eye(dist_matrix.size(1))).cuda()
-        eye = torch.eye(dist_matrix.size(1)).cuda()
+        eye = torch.autograd.Variable(torch.eye(dist_matrix.size(1))).cuda()
+        # eye = torch.eye(dist_matrix.size(1)).cuda()
     dist_matrix_masked = dist_matrix + eye * mask_val
     mask = (dist_matrix_masked.ge(zero_val).float() - 1.0) * (-1)
     mask = mask.type_as(dist_matrix_masked) * mask_val
