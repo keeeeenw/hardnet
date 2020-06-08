@@ -536,27 +536,27 @@ class TrainHardNet(object):
                 data_n = Variable(data_n)
                 out_n = model(data_n)
 
-            if self.args.batch_reduce == 'L2Net':
-                loss = loss_L2Net(out_a, out_p, anchor_swap = self.args.anchorswap,
-                        margin = self.args.margin, loss_type = self.args.loss)
-            elif self.args.batch_reduce == 'random_global':
-                loss = loss_random_sampling(out_a, out_p, out_n,
-                    margin=self.args.margin,
-                    anchor_swap=self.args.anchorswap,
-                    loss_type = self.args.loss)
-            elif self.args.loss == 'qht':
+            if self.args.loss == 'qht':
                 loss = loss_SOSNet(out_a, out_p,
-                                   margin=self.args.margin,
                                    batch_reduce=self.args.batch_reduce,
                                    no_cuda=self.args.no_cuda)
             else:
-                loss = loss_HardNet(out_a, out_p,
-                                margin=self.args.margin,
-                                anchor_swap=self.args.anchorswap,
-                                anchor_ave=self.args.anchorave,
-                                batch_reduce = self.args.batch_reduce,
-                                loss_type = self.args.loss,
-                                no_cuda = self.args.no_cuda)
+                if self.args.batch_reduce == 'L2Net':
+                    loss = loss_L2Net(out_a, out_p, anchor_swap = self.args.anchorswap,
+                            margin = self.args.margin, loss_type = self.args.loss)
+                elif self.args.batch_reduce == 'random_global':
+                    loss = loss_random_sampling(out_a, out_p, out_n,
+                        margin=self.args.margin,
+                        anchor_swap=self.args.anchorswap,
+                        loss_type = self.args.loss)
+                else:
+                    loss = loss_HardNet(out_a, out_p,
+                                    margin=self.args.margin,
+                                    anchor_swap=self.args.anchorswap,
+                                    anchor_ave=self.args.anchorave,
+                                    batch_reduce = self.args.batch_reduce,
+                                    loss_type = self.args.loss,
+                                    no_cuda = self.args.no_cuda)
 
             if self.args.decor:
                 loss += CorrelationPenaltyLoss()(out_a)
