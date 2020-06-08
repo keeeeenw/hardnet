@@ -344,6 +344,7 @@ class ResNetHardSmall(nn.Module):
             self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
             self.fc = nn.Linear(128, num_classes)
         else:
+            self.fc = None
             self.layer4 = nn.Conv2d(self.inplanes, 128, kernel_size=8, bias = False)
             self.bn5 = norm_layer(128)
 

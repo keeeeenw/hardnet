@@ -41,6 +41,14 @@ from Utils import str2bool
 import torch.nn as nn
 import torch.utils.data as data
 
+# ResNet improvements
+from ResNetMono import resnet18, resnet34, resnet50, resnet101, reshardnet, reshardnetsmall, reshardnetsmall2, reshardnetstiny
+# DenseNet improvements
+from DenseNetMono import densenet121, densenet_reduced, densenet_tiny
+# MoileNet improvements
+from MobileNetMono import mobilenet_v2, mobilenet_v2_reduced, mobilenet_v2_tiny
+
+from torchsummary import summary
 
 class CorrelationPenaltyLoss(nn.Module):
     def __init__(self):
@@ -66,7 +74,7 @@ parser.add_argument('--w1bsroot', type=str,
 parser.add_argument('--dataroot', type=str,
                     default='data/sets/',
                     help='path to dataset')
-parser.add_argument('--enable-logging', type=str2bool, default=False,
+parser.add_argument('--enable-logging', type=str2bool, default=True,
                     help='output to tensorlogger')
 parser.add_argument('--log-dir', default='data/logs/',
                     help='folder to output log')
@@ -137,10 +145,20 @@ parser.add_argument('--seed', type=int, default=0, metavar='S',
                     help='random seed (default: 0)')
 parser.add_argument('--log-interval', type=int, default=10, metavar='LI',
                     help='how many batches to wait before logging training status')
+parser.add_argument('--model-variant', default='hardnet', type=str,
+                    metavar='mv', help='The model to use (default: hardnet)')
+parser.add_argument('--pre-trained', default=False, type=str2bool,
+                    metavar='pt', help='Use pretrained weights')
+parser.add_argument('--dropout', default=0.0, type=float,
+                    metavar='dp', help='Dropout for various models')
+parser.add_argument('--change-lr', default=True, type=str2bool,
+                    metavar='clr', help='Should change learning rate')
+parser.add_argument('--initialization', default='hardnet', type=str,
+                    metavar='init', help='Initilaization method for selective models')
 
 args = parser.parse_args()
 
-suffix = '{}_{}'.format(args.training_set, args.batch_reduce)
+suffix = '{}_{}_{}'.format(args.experiment_name, args.training_set, args.batch_reduce)
 
 if args.gor:
     suffix = suffix + '_gor_alpha{:1.1f}'.format(args.alpha)
@@ -373,6 +391,110 @@ class TripletPhotoTour(dset.PhotoTour):
         else:
             return self.matches.size(0)
 
+class ResHardNet(nn.Module):
+    """ResHardNet model definition
+    """
+    def __init__(self, pretrained=False, model="reshardnet", dropout=0.0, initialization="hardnet"):
+        super(ResHardNet, self).__init__()
+        # by default resnet outputs 1000 classes
+
+        if (model == "reshardnet"):
+            print("Creating ResNet 18 Model")
+            self.features = resnet18(pretrained=pretrained, progress=True, num_classes=128, dropout=dropout)
+        elif (model == "reshardnet34"):
+            print("Creating ResNet 34 Model")
+            self.features = resnet34(pretrained=pretrained, progress=True, num_classes=128, dropout=dropout)
+        elif (model == "reshardnet50"):
+            print("Creating ResNet 50 Model")
+            self.features = resnet50(pretrained=pretrained, progress=True, num_classes=128, dropout=dropout)
+        elif (model == "reshardnet101"):
+            print("Creating ResNet 101 Model")
+            self.features = resnet101(pretrained=pretrained, progress=True, num_classes=128, dropout=dropout)
+        elif (model == "reshardnetdefault"):
+            print("Creating ResNet Hard")
+            self.features = reshardnet(dropout=dropout)
+        elif (model == "reshardnetdefaultsmall"):
+            print("Creating ResNet Hard Small")
+            self.features = reshardnetsmall(dropout=dropout, initialization=initialization)
+        elif (model == "reshardnetdefaultsmall2"):
+            print("Creating ResNet Hard Small")
+            self.features = reshardnetsmall2(dropout=dropout)
+        elif (model == "reshardnetdefaultsmallfc"):
+            print("Creating ResNet Hard Small With Fully Connected Layer")
+            self.features = reshardnetsmall(dropout=dropout, initialization=initialization, fc=True)
+        elif (model == "reshardnetdefaultsmall2fc"):
+            print("Creating ResNet Hard Small 2 blocks With Fully Connected Layer")
+            self.features = reshardnetsmall2(dropout=dropout, initialization=initialization, fc=True)
+        elif (model == "reshardnetdefaulttiny"):
+            print("Creating ResNet Hard Tiny")
+            self.features = reshardnetstiny(dropout=dropout, initialization=initialization)
+        return
+    
+    def input_norm(self,x):
+        flat = x.view(x.size(0), -1)
+        mp = torch.mean(flat, dim=1)
+        sp = torch.std(flat, dim=1) + 1e-7
+        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
+    
+    def forward(self, input):
+        x_features = self.features(self.input_norm(input))
+        x = x_features.view(x_features.size(0), -1)
+        return L2Norm()(x)
+
+class HardNetLarge(nn.Module):
+    """HardNetTiny model definition
+    """
+    def __init__(self):
+        super(HardNetLarge, self).__init__()
+        print("Creating HardNetLarge model")
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(32, affine=False),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(32, affine=False),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1, bias = False),
+            nn.BatchNorm2d(64, affine=False),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(64, affine=False),
+            nn.ReLU(),
+            # (16 + 2 - 3) / 2 + 1 = 8 filter size
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1, bias = False),
+            nn.BatchNorm2d(128, affine=False),
+            nn.ReLU(),
+            # (8 + 2 - 3) / 1 + 1 = 8
+            nn.Conv2d(128, 128, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(128, affine=False),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            # (8 + 2 - 3) / 2 + 1 = 4
+            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1, bias = False),
+            nn.BatchNorm2d(256, affine=False),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1, bias = False),
+            nn.BatchNorm2d(256, affine=False),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Conv2d(256, 128, kernel_size=4, bias = False),
+            nn.BatchNorm2d(128, affine=False),
+        )
+        print("Initializing weights")
+        self.features.apply(weights_init)
+        return
+    
+    def input_norm(self,x):
+        flat = x.view(x.size(0), -1)
+        mp = torch.mean(flat, dim=1)
+        sp = torch.std(flat, dim=1) + 1e-7
+        return (x - mp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(-1).expand_as(x)) / sp.detach().unsqueeze(-1).unsqueeze(-1).unsqueeze(1).expand_as(x)
+    
+    def forward(self, input):
+        x_features = self.features(self.input_norm(input))
+        x = x_features.view(x_features.size(0), -1)
+        return L2Norm()(x)
 
 class HardNet(nn.Module):
     """HardNet model definition
@@ -485,7 +607,7 @@ def create_loaders(load_random_triplets=False):
     return train_loader, test_loaders
 
 
-def train(train_loader, model, optimizer, epoch, logger, load_triplets=False):
+def train(train_loader, model, optimizer, epoch, logger, load_triplets=False, print_summary=False):
     # switch to train mode
     model.train()
     pbar = tqdm(enumerate(train_loader))
@@ -524,6 +646,13 @@ def train(train_loader, model, optimizer, epoch, logger, load_triplets=False):
         if args.decor:
             loss += CorrelationPenaltyLoss()(out_a)
 
+        if print_summary:
+            with torch.no_grad():
+                # We can only do it here because the input are only switched
+                # to cuda types above.
+                summary(model, input_size=(1, args.imageSize, args.imageSize))
+            print_summary = False
+
         if args.gor:
             loss += args.alpha * global_orthogonal_regularization(out_a, out_n)
         optimizer.zero_grad()
@@ -535,9 +664,9 @@ def train(train_loader, model, optimizer, epoch, logger, load_triplets=False):
                 'Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data_a), len(train_loader.dataset),
                            100. * batch_idx / len(train_loader),
-                    loss.data[0]))
+                    loss.item()))
     if (args.enable_logging):
-        logger.log_value('loss', loss.data[0]).step()
+        logger.log_value('loss', loss.item()).step()
     try:
         os.stat('{}{}'.format(args.model_dir, suffix))
     except:
@@ -559,11 +688,12 @@ def test(test_loader, model, epoch, logger, logger_test_name):
         if args.cuda:
             data_a, data_p = data_a.cuda(), data_p.cuda()
 
-        data_a, data_p, label = Variable(data_a, volatile=True), \
-                                Variable(data_p, volatile=True), Variable(label)
+        with torch.no_grad():
+            data_a, data_p, label = Variable(data_a), \
+                                    Variable(data_p), Variable(label)
 
-        out_a = model(data_a)
-        out_p = model(data_p)
+            out_a = model(data_a)
+            out_p = model(data_p)
         dists = torch.sqrt(torch.sum((out_a - out_p) ** 2, 1))  # euclidean distance
         distances.append(dists.data.cpu().numpy().reshape(-1, 1))
         ll = label.data.cpu().numpy().reshape(-1, 1)
@@ -653,10 +783,12 @@ def main(train_loader, test_loaders, model, logger, file_logger):
 
     start = args.start_epoch
     end = start + args.epochs
+    print_summary = True
     for epoch in range(start, end):
         # iterate over test loaders and test results
         #train_loader, test_loaders2 = create_loaders(load_random_triplets=triplet_flag)
-        train(train_loader, model, optimizer1, epoch, logger, triplet_flag)
+        train(train_loader, model, optimizer1, epoch, logger, triplet_flag, print_summary=print_summary)
+        print_summary = False
         for test_loader in test_loaders:
             test(test_loader['dataloader'], model, epoch, logger, test_loader['name'])
         if TEST_ON_W1BS:
@@ -698,7 +830,18 @@ if __name__ == '__main__':
         if not os.path.isdir(DESCS_DIR):
             os.makedirs(DESCS_DIR)
     logger, file_logger = None, None
-    model = HardNet()
+    if args.model_variant.startswith("reshardnet"):
+        model = ResHardNet(args.pre_trained, args.model_variant, args.dropout, args.initialization)
+    elif args.model_variant.startswith("densenet"):
+        model = DenseHardNet(args.pre_trained, args.model_variant)
+    elif args.model_variant.startswith("mobilenet_v2"):
+        model = MobileV2HardNet(args.pre_trained, args.model_variant)
+    elif args.model_variant.startswith("hardnettiny"):
+        model = HardNetTiny(args.dropout)
+    elif args.model_variant.startswith("hardnetlarge"):
+        model = HardNetLarge()
+    else:
+        model = HardNet()
     if (args.enable_logging):
         from Loggers import Logger, FileLogger
         logger = Logger(LOG_DIR)
